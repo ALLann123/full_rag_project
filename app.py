@@ -51,7 +51,7 @@ st.set_page_config(
 )
 
 st.markdown(
-    '<h2 style="text-align: center;">📜🔎<i> Do our LLM even RAG bro?</i>🤖📰</h2>',
+    '<h2 style="text-align: center;">📜🔎<i> 📓➕🌐CHAT</i>🤖📰</h2>',
     unsafe_allow_html=True
 )
 

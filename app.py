@@ -1,4 +1,8 @@
 #!/usr/bin/python3
+import sys
+__import__('pysqlite3')
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 import streamlit as st
 import os
 from dotenv import load_dotenv
@@ -12,7 +16,6 @@ from rag_methods import (
     load_doc_to_db,
     load_url_to_db,
     stream_llm_rag_response,
-    initialize_vector_db
 )
 
 # Load environment variables
@@ -51,7 +54,7 @@ st.set_page_config(
 )
 
 st.markdown(
-    '<h2 style="text-align: center;">📜🔎<i> 📓➕🌐CHAT</i>🤖📰</h2>',
+    '<h2 style="text-align: center;">📜🔎<i> Do our LLM even RAG bro?</i>🤖📰</h2>',
     unsafe_allow_html=True
 )
 
@@ -83,15 +86,7 @@ with st.sidebar:
         index=0
     )
 
-    # Initialize toggle before showing it
     is_vector_db_loaded = st.session_state.vector_db is not None
-    
-    # If documents were just uploaded and vector_db is now available, enable RAG
-    if "documents_just_uploaded" in st.session_state and st.session_state.documents_just_uploaded:
-        if is_vector_db_loaded:
-            st.session_state.use_rag = True
-        st.session_state.documents_just_uploaded = False
-
     st.session_state.use_rag = st.toggle(
         "Use RAG",
         value=st.session_state.use_rag,
@@ -113,21 +108,27 @@ with st.sidebar:
     )
 
     if uploaded_files:
-        db, sources = load_doc_to_db(uploaded_files)
-        if db is not None:
-            st.session_state.vector_db = db
-            st.session_state.rag_sources.extend(sources)
-            st.session_state.documents_just_uploaded = True
-            st.rerun()  # Rerun to update the toggle state
+        try:
+            db, sources = load_doc_to_db(uploaded_files)
+            if db is not None:
+                st.session_state.vector_db = db
+                st.session_state.rag_sources.extend(sources)
+                st.session_state.use_rag = True
+                st.rerun()
+        except Exception as e:
+            st.error(f"Error loading documents: {str(e)}")
 
     url = st.text_input("🌐 Introduce a URL", placeholder="https://example.com", key="rag_url")
     if url:
-        db, sources = load_url_to_db(url)
-        if db is not None:
-            st.session_state.vector_db = db
-            st.session_state.rag_sources.extend(sources)
-            st.session_state.documents_just_uploaded = True
-            st.rerun()  # Rerun to update the toggle state
+        try:
+            db, sources = load_url_to_db(url)
+            if db is not None:
+                st.session_state.vector_db = db
+                st.session_state.rag_sources.extend(sources)
+                st.session_state.use_rag = True
+                st.rerun()
+        except Exception as e:
+            st.error(f"Error loading URL: {str(e)}")
 
     with st.expander(f"📚 Documents in DB ({len(st.session_state.rag_sources)})"):
         st.write(st.session_state.rag_sources)
